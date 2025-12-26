@@ -1,0 +1,328 @@
+service: dunkin-pos-backend
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: us-east-1
+  environment:
+    MENU_TABLE: ${self:service}-menu-${opt:stage, 'dev'}
+    ORDERS_TABLE: ${self:service}-orders-${opt:stage, 'dev'}
+    INVENTORY_TABLE: ${self:service}-inventory-${opt:stage, 'dev'}
+    IMAGES_BUCKET: dunkin-pos-images-${opt:stage, 'dev'}
+    IMAGES_CDN_DOMAIN: ${env:IMAGES_CDN_DOMAIN, 'd1234567890.cloudfront.net'}
+  
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource:
+        - "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:service}-*"
+    - Effect: Allow
+      Action:
+        - s3:PutObject
+        - s3:PutObjectAcl
+        - s3:GetObject
+        - s3:DeleteObject
+      Resource:
+        - "arn:aws:s3:::dunkin-pos-images-${opt:stage, 'dev'}/*"
+    - Effect: Allow
+      Action:
+        - s3:ListBucket
+      Resource:
+        - "arn:aws:s3:::dunkin-pos-images-${opt:stage, 'dev'}"
+
+functions:
+  getMenu:
+    handler: handlers/menu.getMenu
+    events:
+      - http:
+          path: menu
+          method: get
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
+  
+  getMenuOptions:
+    handler: handlers/cors.handleOptions
+    events:
+      - http:
+          path: menu
+          method: options
+  
+  createMenuItem:
+    handler: handlers/menu.createMenuItem
+    events:
+      - http:
+          path: menu
+          method: post
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
+      - http:
+          path: menu
+          method: options
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
+  
+  updateMenuItem:
+    handler: handlers/menu.updateMenuItem
+    events:
+      - http:
+          path: menu/{id}
+          method: put
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
+      - http:
+          path: menu/{id}
+          method: options
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
+  
+  deleteMenuItem:
+    handler: handlers/menu.deleteMenuItem
+    events:
+      - http:
+          path: menu/{id}
+          method: delete
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
+      - http:
+          path: menu/{id}
+          method: options
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
+  
+  getUploadUrl:
+    handler: handlers/images.getUploadUrl
+    events:
+      - http:
+          path: images/upload-url
+          method: post
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
+      - http:
+          path: images/upload-url
+          method: options
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
+  
+  createOrder:
+    handler: handlers/orders.createOrder
+    events:
+      - http:
+          path: orders
+          method: post
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
+      - http:
+          path: orders
+          method: options
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
+  
+  getOrders:
+    handler: handlers/orders.getOrders
+    events:
+      - http:
+          path: orders
+          method: get
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
+  
+  getOrdersOptions:
+    handler: handlers/cors.handleOptions
+    events:
+      - http:
+          path: orders
+          method: options
+  
+  updateInventory:
+    handler: handlers/inventory.updateInventory
+    events:
+      - http:
+          path: inventory/{id}
+          method: put
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
+      - http:
+          path: inventory/{id}
+          method: options
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
+  
+  getInventory:
+    handler: handlers/inventory.getInventory
+    events:
+      - http:
+          path: inventory
+          method: get
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
+  
+  getInventoryOptions:
+    handler: handlers/cors.handleOptions
+    events:
+      - http:
+          path: inventory
+          method: options
+  
+  createInventory:
+    handler: handlers/inventory.createInventory
+    events:
+      - http:
+          path: inventory
+          method: post
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
+      - http:
+          path: inventory
+          method: options
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
+  
+  deleteInventory:
+    handler: handlers/inventory.deleteInventory
+    events:
+      - http:
+          path: inventory/{id}
+          method: delete
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
+      - http:
+          path: inventory/{id}
+          method: options
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
+  
+  login:
+    handler: handlers/auth.login
+    events:
+      - http:
+          path: auth/login
+          method: post
+          cors: true
+  
+  verifyToken:
+    handler: handlers/auth.verifyToken
+    events:
+      - http:
+          path: auth/verify
+          method: get
+          cors: true
+
+resources:
+  Resources:
+    MenuTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:service}-menu-${opt:stage, 'dev'}
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+    
+    OrdersTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:service}-orders-${opt:stage, 'dev'}
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+    
+    InventoryTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:service}-inventory-${opt:stage, 'dev'}
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
