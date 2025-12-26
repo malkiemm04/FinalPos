@@ -2,6 +2,10 @@
 
 A cloud-native Point of Sale system for Dunkin' Donuts built with AWS serverless technologies.
 
+🌐 **Live Demo**: [https://malkiemm04.github.io/FinalPos/](https://malkiemm04.github.io/FinalPos/)
+
+📦 **Repository**: [https://github.com/malkiemm04/FinalPos](https://github.com/malkiemm04/FinalPos)
+
 ## 🚀 Features
 
 - ✅ **Cloud-hosted POS system** with HTTPS via CloudFront
@@ -14,7 +18,8 @@ A cloud-native Point of Sale system for Dunkin' Donuts built with AWS serverless
 - ✅ **Real-time monitoring** with CloudWatch dashboards
 - ✅ **Cost control** with AWS Budgets alerts
 - ✅ **Infrastructure as Code** with Terraform
-- ✅ **CI/CD ready** with GitHub Actions
+- ✅ **CI/CD ready** with GitHub Actions (3 automated pipelines)
+- ✅ **GitHub Pages deployment** for public access
 - ✅ **Complete CRUD operations** for Menu, Orders, and Inventory
 
 ## 📐 Architecture
@@ -68,22 +73,33 @@ A cloud-native Point of Sale system for Dunkin' Donuts built with AWS serverless
 ## 📁 Project Structure
 
 ```
-cloud-dunkin-pos-pro/
+FinalPos/
 ├── frontend/
-│   └── index.html          # Complete POS application
+│   ├── index.html          # Complete POS application
+│   ├── package.json        # Frontend dependencies
+│   ├── start-server.bat    # Windows server script
+│   └── start-server.sh     # Linux/Mac server script
 ├── backend/
 │   ├── package.json        # Node.js dependencies
 │   ├── serverless.yml      # Serverless Framework config
+│   ├── create_user.js      # User creation utility
 │   └── handlers/
 │       ├── menu.js         # Menu CRUD operations
 │       ├── orders.js       # Order management
 │       ├── inventory.js    # Inventory management
-│       └── auth.js         # Authentication handlers
+│       ├── auth.js         # Authentication handlers
+│       ├── cors.js         # CORS configuration
+│       └── images.js       # Image upload handlers
 ├── infrastructure/
 │   └── terraform/
 │       ├── main.tf         # Main infrastructure
 │       ├── variables.tf    # Terraform variables
 │       └── outputs.tf      # Output values
+├── .github/
+│   └── workflows/
+│       ├── deploy-backend.yml    # Backend CI/CD pipeline
+│       ├── deploy-frontend.yml   # Frontend to AWS pipeline
+│       └── deploy-gh-pages.yml   # GitHub Pages pipeline
 └── README.md
 ```
 
@@ -100,8 +116,8 @@ cloud-dunkin-pos-pro/
 ### 1. Clone Repository
 
 ```bash
-git clone https://github.com/yourusername/cloud-dunkin-pos-pro.git
-cd cloud-dunkin-pos-pro
+git clone https://github.com/malkiemm04/FinalPos.git
+cd FinalPos
 ```
 
 ### 2. Install Backend Dependencies
@@ -226,7 +242,11 @@ const CLOUD_CONFIG = {
 };
 ```
 
-### Step 4: Deploy Frontend to S3
+### Step 4: Deploy Frontend
+
+You have two deployment options:
+
+#### Option A: Deploy to AWS S3 + CloudFront (Manual)
 
 ```bash
 # Get the S3 bucket name from Terraform output
@@ -235,6 +255,17 @@ aws s3 sync frontend/ s3://dunkin-pos-frontend-dev/ --delete
 # Invalidate CloudFront cache
 aws cloudfront create-invalidation --distribution-id YOUR_DISTRIBUTION_ID --paths "/*"
 ```
+
+#### Option B: Deploy to GitHub Pages (Automatic)
+
+The frontend is automatically deployed to GitHub Pages via CI/CD pipeline:
+1. Push changes to the `main` branch
+2. The workflow automatically deploys to: **https://malkiemm04.github.io/FinalPos/**
+
+**To enable GitHub Pages:**
+1. Go to repository **Settings → Pages**
+2. Under "Source", select **GitHub Actions**
+3. Save - the workflow will run automatically
 
 ## 🔌 API Endpoints
 
@@ -327,18 +358,54 @@ curl -X POST https://YOUR_API.execute-api.us-east-1.amazonaws.com/dev/orders \
   -d '{"items":[{"id":"1","name":"Coffee","price":2.99,"quantity":2}],"total":5.98}'
 ```
 
-## 🔄 CI/CD Pipeline
+## 🔄 CI/CD Pipelines
 
-CI/CD can be configured using GitHub Actions workflows for automated deployment of both frontend and backend components.
+This project includes **3 automated CI/CD pipelines** using GitHub Actions:
 
-**Setup GitHub Secrets:**
-- `AWS_ACCESS_KEY_ID`
-- `AWS_SECRET_ACCESS_KEY`
-- `CLOUDFRONT_DISTRIBUTION_ID`
+### 1. Backend Deployment Pipeline (`deploy-backend.yml`)
+- **Triggers**: Automatically on changes to `backend/**` files
+- **Actions**:
+  - Installs Node.js dependencies
+  - Deploys Lambda functions using Serverless Framework
+  - Deploys to AWS API Gateway
+- **Manual Trigger**: Available via GitHub Actions tab
+
+### 2. Frontend to AWS Pipeline (`deploy-frontend.yml`)
+- **Triggers**: Automatically on changes to `frontend/**` files
+- **Actions**:
+  - Syncs frontend files to AWS S3 bucket
+  - Invalidates CloudFront cache for instant updates
+  - Deploys to AWS CDN
+- **Manual Trigger**: Available via GitHub Actions tab
+
+### 3. GitHub Pages Pipeline (`deploy-gh-pages.yml`)
+- **Triggers**: Automatically on any push to `main` branch
+- **Actions**:
+  - Uploads frontend files as GitHub Pages artifact
+  - Deploys to GitHub Pages
+  - Makes site publicly accessible at `https://malkiemm04.github.io/FinalPos/`
+- **Manual Trigger**: Available via GitHub Actions tab
+
+### Setup GitHub Secrets (for AWS deployments):
+
+Go to **Settings → Secrets and variables → Actions** and add:
+- `AWS_ACCESS_KEY_ID` - Your AWS access key
+- `AWS_SECRET_ACCESS_KEY` - Your AWS secret key
+- `S3_BUCKET_NAME` - Your S3 bucket name (for frontend deployment)
+- `CLOUDFRONT_DISTRIBUTION_ID` - Your CloudFront distribution ID
+
+**Note**: GitHub Pages deployment doesn't require any secrets - it works automatically!
 
 ## 🐛 Troubleshooting
 
-### Frontend not loading
+### Frontend not loading on GitHub Pages
+- Ensure GitHub Pages is enabled in repository Settings → Pages
+- Select "GitHub Actions" as the source (not "Deploy from a branch")
+- Check the Actions tab to verify the deployment workflow completed successfully
+- Wait 1-2 minutes after deployment for GitHub Pages to update
+- Clear browser cache or try incognito mode
+
+### Frontend not loading on AWS
 - Check CloudFront distribution status
 - Verify S3 bucket has correct files
 - Check browser console for CORS errors
